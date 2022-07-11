@@ -1,4 +1,5 @@
 from datetime import datetime
+from time import sleep
 from seleniumSetup import SeleniumSetup
 from selenium.webdriver.common.by import By
 
@@ -17,6 +18,7 @@ class Qandle(SeleniumSetup):
         self.clock_in_xpath = "//span[contains(text(), 'Clock In')]/parent::button"
         self.clock_out_xpath = "//span[contains(text(), 'Clock Out')]/parent::button"
         self.logged_time_xpath = "//div[starts-with(@class, 'timer-time') and contains(@class, 'timer-container')]/child::div[starts-with(@class, 'timer-time-set') and contains(@class, 'blue')]"
+        self.modal_yes_xpath = "//span[contains(text(), 'Yes')]/parent::button"
         
     def open_qandle(self):
         self.driver.get(self.qandle_url)
@@ -89,12 +91,17 @@ class Qandle(SeleniumSetup):
         Click on Clock Out and stop the timer
         """
         clock_out_button = self.find_element_by_xpath(self.clock_out_xpath)
+        modal_yes_button = self.find_element_by_xpath(self.modal_yes_xpath)
         total_work_time = self.get_logged_hours()
-        min_hours_met = total_work_time == self.required_hours
+        work_time = self.find_element_by_xpath(self.logged_time_xpath)
+        min_hours_met = self.convert_time(work_time.text) >= self.required_hours
         
         if min_hours_met:
             if clock_out_button.is_displayed():
                 clock_out_button.click()
+                sleep(5)
+                modal_yes_button.click()
+                sleep(5)
             else:
                 raise Exception("No Clock out Button")
         else:
