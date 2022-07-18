@@ -1,5 +1,6 @@
 from datetime import datetime
 from time import sleep
+from log import Log
 from seleniumSetup import SeleniumSetup
 from selenium.webdriver.common.by import By
 
@@ -12,6 +13,7 @@ class Qandle(SeleniumSetup):
         self.driver = self.chrome_driver()
         self.required_hours = self.convert_time("09:00:00")
         self.qandle_url = "https://igs.qandle.com/"
+        self.clockin_time_xpath = "//span[@ng-if='clickedTime']"
         self.email_input_xpath = "//input[@name='email' and @type='email']"
         self.password_input_xpath = "//input[@name='password' and @type='password']"
         self.login_button_xpath = "//button[contains(text(), 'Sign In') and @id='signInSubmit']"
@@ -65,6 +67,11 @@ class Qandle(SeleniumSetup):
         else:
             self.driver.close()
             raise Exception("No login button")
+        
+    def write_log(self):
+        login_time = datetime.strptime(self.find_element_by_xpath(
+            self.clockin_time_xpath).text, "%H:%M:%S").time() if self.find_element_by_xpath(self.clockin_time_xpath) else datetime.now().time()
+        Log(login_time)
                 
     def clock_in(self):
         """
@@ -76,11 +83,13 @@ class Qandle(SeleniumSetup):
         
         if clock_out_button.is_displayed():
             print(f"Already Clocked In for today for {work_time.text} hours")
+            self.write_log()
             self.driver.close()
             return
         
         if clock_in_button is not None and clock_in_button.is_displayed():
             clock_in_button.click()
+            self.write_log()
             return
         else:
             self.driver.close()
@@ -92,22 +101,14 @@ class Qandle(SeleniumSetup):
         """
         clock_out_button = self.find_element_by_xpath(self.clock_out_xpath)
         modal_yes_button = self.find_element_by_xpath(self.modal_yes_xpath)
-        total_work_time = self.get_logged_hours()
-        work_time = self.find_element_by_xpath(self.logged_time_xpath)
-        min_hours_met = self.convert_time(work_time.text) >= self.required_hours
-        
-        if min_hours_met:
-            if clock_out_button.is_displayed():
-                clock_out_button.click()
-                sleep(5)
-                modal_yes_button.click()
-                sleep(5)
-            else:
-                raise Exception("No Clock out Button")
-        else:
-            print("Minimum hours not met")
+        if clock_out_button.is_displayed():
+            clock_out_button.click()
+            sleep(5)
+            modal_yes_button.click()
+            sleep(5)
             self.driver.close()
-            return
+        else:
+            raise Exception("No Clock out Button")
         
     def find_element_by_xpath(self, xpath: str):
         """Finds element with the given xpath
