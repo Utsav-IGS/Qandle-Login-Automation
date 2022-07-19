@@ -90,6 +90,7 @@ class Qandle(SeleniumSetup):
         if clock_in_button is not None and clock_in_button.is_displayed():
             clock_in_button.click()
             self.write_log()
+            self.driver.close()
             return
         else:
             self.driver.close()
