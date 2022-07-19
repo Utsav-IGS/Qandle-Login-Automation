@@ -27,7 +27,7 @@ class Log(Setup):
         
     def write_csv(self, data: dict):
         if self.log_file_exists:
-            with open("config_files/daily_log.csv", "w+") as log_file:
+            with open("config_files/daily_log.csv", "a+") as log_file:
                 fieldnames = [key for key in data]
                 writer = csv.DictWriter(log_file, fieldnames=fieldnames, lineterminator="\n")
                 if os.stat("config_files/daily_log.csv").st_size == 0:
